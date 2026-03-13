@@ -103,6 +103,7 @@ enum Role {
 enum FileType {
   IMAGE
   VIDEO
+  AUDIO
   DOCUMENT
   ARCHIVE
 }

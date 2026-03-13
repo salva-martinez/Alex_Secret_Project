@@ -1,0 +1,18 @@
+---
+description: Gestión de archivos de audio (notas de voz, música, grabaciones)
+globs: components/audio/**, app/api/upload/**, components/player/**
+---
+# Audio Management & Playback
+
+1. **Validación de Subida:**
+   - **Formatos permitidos:** MP3, WAV, AAC, OGG y M4A (común en notas de voz de iOS/Android).
+   - **Límite de tamaño:** 50MB por archivo (ajustable según necesidad).
+   - **Metadatos:** Intentar extraer la duración del audio antes de finalizar la subida para guardarla en la BD.
+
+2. **Reproducción (UI):**
+   - Implementar un reproductor de audio personalizado (no usar el por defecto del navegador si es posible).
+   - **Funciones requeridas:** Play/Pause, barra de progreso (seek bar), control de volumen y velocidad de reproducción (1x, 1.5x, 2x) para notas de voz largas.
+   - **Estado Global:** Si un audio se está reproduciendo, debe poder seguir sonando mientras el usuario navega por la galería (reproductor persistente en el footer).
+
+3. **Visualización:**
+   - Si el archivo es un audio, mostrar un icono representativo o, idealmente, una onda de sonido (waveform) simple usando una librería como `wavesurfer.js`.
