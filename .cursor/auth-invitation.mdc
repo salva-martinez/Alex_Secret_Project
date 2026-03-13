@@ -1,0 +1,18 @@
+---
+description: Reglas para el sistema de invitación y acceso privado
+globs: app/api/auth/**, middleware.ts
+---
+# Security & Invitation Logic
+
+1. **Flujo de Acceso:**
+   - El usuario ingresa su email.
+   - El sistema verifica si el email existe en la tabla `AllowedUsers`.
+   - Si existe, envía un Magic Link vía Resend/Nodemailer.
+   - Si no existe, deniega el acceso con un mensaje genérico (por privacidad).
+
+2. **Middleware:**
+   - Todas las rutas (excepto /login) deben estar protegidas.
+   - Si no hay sesión activa, redirección inmediata a `/login`.
+
+3. **Invitaciones:**
+   - Crear un rol de 'Admin' (tú) que pueda añadir nuevos emails a la lista de permitidos desde la interfaz.

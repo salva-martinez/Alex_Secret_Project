@@ -1,0 +1,10 @@
+---
+description: Manejo de errores e imprevistos
+globs: **/*.tsx
+---
+# Error Handling & Edge Cases
+
+- **Subidas interrumpidas:** Mostrar barra de progreso real. Si falla, permitir reintentar sin recargar la página.
+- **Enlaces expirados:** Si el Magic Link expira, mostrar un mensaje claro: "El enlace ha caducado, solicita uno nuevo".
+- **Estado vacío:** Si la biblioteca está vacía, mostrar una ilustración o mensaje motivador para subir la primera foto.
+- **Responsive:** La aplicación debe ser 100% funcional en móviles (donde los amigos suelen tomar las fotos).

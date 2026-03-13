@@ -1,0 +1,15 @@
+---
+description: Gestión de archivos multimedia (fotos, videos, archivos)
+globs: components/upload/**, app/api/upload/**
+---
+# Multimedia Management
+
+- **Uploads:** Implementar 'Drag & Drop' usando `react-dropzone`.
+- **Validación:** - Imágenes: JPG, PNG, WEBP.
+  - Video: MP4, MOV (limitado a 100MB por archivo inicialmente).
+  - Otros: PDF, ZIP.
+- **Galería:**
+  - Carga perezosa (Lazy loading) para no saturar el navegador.
+  - Vista previa de imágenes con zoom.
+  - Reproductor de video integrado (no descarga automática).
+- **Organización:** Los archivos deben guardarse con metadatos: `subido_por`, `fecha`, `categoría`.

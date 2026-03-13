@@ -1,0 +1,67 @@
+---
+description: Reglas obligatorias para código limpio, eficiente y buenas prácticas (tipado, SRP, early return)
+globs: **/*.{ts,tsx}
+alwaysApply: true
+---
+
+# Clean Code – Reglas Obligatorias
+
+## 1. Buen tipado (TypeScript estricto)
+
+- **Nunca usar `any`**: Usar `unknown` si el tipo es desconocido y validar antes de usar.
+- **Tipos explícitos** en firmas de función y retornos públicos.
+- **Interfaces sobre `type`** para contratos de objeto; `type` para uniones/mapeos.
+- **Evitar assertions innecesarias** (`as`); preferir narrowing natural o type guards.
+
+```typescript
+// ❌ BAD
+function getData(id: any) {
+  return fetch(`/api/${id}`);
+}
+
+// ✅ GOOD
+function getData(id: string): Promise<ApiResponse> {
+  return fetch(`/api/${id}`) as Promise<ApiResponse>;
+}
+```
+
+## 2. Responsabilidad única (SRP)
+
+- **Una función** = una tarea concreta.
+- **Un componente** = un bloque UI o responsabilidad clara.
+- **Un módulo** = un dominio lógico (auth, users, storage).
+
+Si un archivo supera ~150 líneas o una función ~30 líneas, considerar dividir.
+
+## 3. Terminación temprana (Early return)
+
+- Validar precondiciones y retornar pronto; evitar ramas anidadas.
+- Usar `return` en guards para reducir complejidad ciclomática.
+
+```typescript
+// ❌ BAD
+function processUser(user: User | null) {
+  if (user) {
+    if (user.isActive) {
+      if (user.emailVerified) {
+        // lógica principal muy anidada
+      }
+    }
+  }
+}
+
+// ✅ GOOD
+function processUser(user: User | null) {
+  if (!user) return;
+  if (!user.isActive) return;
+  if (!user.emailVerified) return;
+  // lógica principal sin anidación
+}
+```
+
+## 4. Principios adicionales
+
+- **Nombres descriptivos**: variables y funciones deben explicar su propósito.
+- **Sin side effects ocultos**: funciones puras donde sea posible; efectos explícitos.
+- **Dependencias mínimas**: inyectar lo necesario; evitar acoplamiento global.
+- **DRY**: extraer lógica repetida a funciones/hooks reutilizables.

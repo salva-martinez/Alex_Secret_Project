@@ -1,0 +1,14 @@
+---
+description: Definición del stack tecnológico y estructura del proyecto
+globs: **/*
+---
+# Tech Stack & Architecture
+
+- **Framework:** Next.js 14+ (App Router).
+- **Lenguaje:** TypeScript.
+- **Autenticación:** NextAuth.js con "Magic Links" (Passwordless).
+- **Base de Datos:** PostgreSQL (vía Prisma ORM).
+- **Almacenamiento:** AWS S3 o Cloudinary (para fotos y videos pesados).
+- **Estilos:** Tailwind CSS + Shadcn/UI.
+
+**Regla de Oro:** No se permite el registro abierto. Solo los correos electrónicos pre-aprobados en la base de datos pueden recibir el enlace de invitación.
