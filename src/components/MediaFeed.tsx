@@ -173,6 +173,7 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
       <style dangerouslySetInnerHTML={{__html: `
         .media-img {
           width: 100%;
+          max-width: 100%;
           height: auto;
           max-height: 80vh;
           object-fit: contain;
@@ -181,6 +182,7 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
         }
         .media-video {
           width: 100%;
+          max-width: 100%;
           height: auto;
           max-height: 80vh;
           object-fit: contain;
@@ -189,16 +191,21 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
         }
         .feed-container {
           max-width: 650px;
+          width: 100%;
           margin: 2rem auto;
           display: flex;
           flex-direction: column;
           gap: 2rem;
+          padding: 0 8px;
+          box-sizing: border-box;
         }
         .media-card {
-          padding: 1.5rem;
+          padding: 1rem;
           display: flex;
           flex-direction: column;
           gap: 1rem;
+          min-width: 0;
+          overflow: hidden;
         }
         .card-header {
           display: flex;

@@ -18,7 +18,7 @@ function MediaPageContent(): ReactElement {
   return (
     <div className="media-page-wrapper">
       <header className="page-header text-center">
-        <h1 className="font-display text-neon-cyan">The Gallery</h1>
+        <h1 className="font-display text-neon-cyan page-title">The Gallery</h1>
         <p className="subtitle">MOMENTS PRESERVED IN TIME</p>
         {searchQuery && (
           <p className="search-result-info text-neon-pink">
@@ -76,7 +76,7 @@ export default function MediaPage(): ReactElement {
           margin: 3rem 0;
         }
         .page-header h1 {
-          font-size: 3.5rem;
+          font-size: clamp(1.75rem, 6vw, 3.5rem);
         }
         .subtitle {
           letter-spacing: 4px;
