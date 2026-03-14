@@ -2,43 +2,110 @@
 
 import { useState, ReactElement, FormEvent, ChangeEvent } from 'react';
 import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
-type AuthStatus = 'idle' | 'loading' | 'success' | 'error';
+type Step = 1 | 2;
+type AuthStatus = 'idle' | 'loading' | 'error';
+
+interface CheckUsernameResponse {
+  exists?: boolean;
+  needsPassword?: boolean;
+  allowed?: boolean;
+}
 
 export default function LoginPage(): ReactElement {
-  const [email, setEmail] = useState<string>('');
+  const router = useRouter();
+  const [step, setStep] = useState<Step>(1);
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [isRegister, setIsRegister] = useState<boolean>(false);
   const [status, setStatus] = useState<AuthStatus>('idle');
   const [message, setMessage] = useState<string>('');
 
-  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setEmail(e.target.value);
+  const handleUsernameChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setUsername(e.target.value);
   };
 
-  const handleSubmit = async (e: FormEvent): Promise<void> => {
+  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setPassword(e.target.value);
+  };
+
+  const handleUsernameSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setStatus('loading');
+    setMessage('');
 
     try {
-      const result = await signIn('email', {
-        email,
+      const res = await fetch(
+        `/api/auth/check-username?username=${encodeURIComponent(username.trim())}`
+      );
+      const data = (await res.json()) as CheckUsernameResponse;
+
+      if (data.allowed === false) {
+        setStatus('error');
+        setMessage('Usuario no autorizado.');
+        return;
+      }
+
+      setIsRegister(data.needsPassword === true);
+      setStep(2);
+      setStatus('idle');
+    } catch (err: unknown) {
+      console.error('Check username error:', err);
+      setStatus('error');
+      setMessage('Error al verificar el usuario.');
+    }
+  };
+
+  const handlePasswordSubmit = async (e: FormEvent): Promise<void> => {
+    e.preventDefault();
+    setStatus('loading');
+    setMessage('');
+
+    try {
+      if (isRegister) {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username.trim(), password }),
+        });
+
+        const data = (await res.json()) as { error?: string };
+
+        if (!res.ok) {
+          setStatus('error');
+          setMessage(data.error ?? 'Error al registrar.');
+          return;
+        }
+      }
+
+      const result = await signIn('credentials', {
+        username: username.trim(),
+        password,
         redirect: false,
         callbackUrl: '/',
       });
 
       if (result?.error) {
         setStatus('error');
-        const isAccessDenied = result.error === 'AccessDenied';
-        setMessage(isAccessDenied ? 'Your email is not on the invitation list.' : 'Something went wrong.');
+        setMessage(isRegister ? 'Error al iniciar sesión.' : 'Contraseña incorrecta.');
         return;
       }
 
-      setStatus('success');
-      setMessage('Check your email for the magic link!');
+      router.push('/');
+      router.refresh();
     } catch (err: unknown) {
-      console.error('Login error:', err);
+      console.error('Auth error:', err);
       setStatus('error');
-      setMessage('An unexpected error occurred.');
+      setMessage('Ha ocurrido un error.');
     }
+  };
+
+  const handleBack = (): void => {
+    setStep(1);
+    setPassword('');
+    setMessage('');
+    setStatus('idle');
   };
 
   return (
@@ -46,28 +113,68 @@ export default function LoginPage(): ReactElement {
       <div className="login-card glass-panel">
         <h1 className="font-display text-neon-pink">FriendVault</h1>
         <p className="subtitle">Exclusive Media Library</p>
-        
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="input-group">
-            <label htmlFor="email">EMail Address</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="invite-only@example.com"
-              required
-            />
-          </div>
 
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            disabled={status === 'loading'}
-          >
-            {status === 'loading' ? 'Sending...' : 'Get Magic Link'}
-          </button>
-        </form>
+        {step === 1 ? (
+          <form onSubmit={handleUsernameSubmit} className="login-form">
+            <div className="input-group">
+              <label htmlFor="username">Usuario</label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={handleUsernameChange}
+                placeholder="nombre_de_usuario"
+                required
+                autoComplete="username"
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={status === 'loading'}
+            >
+              {status === 'loading' ? 'Verificando...' : 'Continuar'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handlePasswordSubmit} className="login-form">
+            <p className="step-username">Usuario: {username}</p>
+            <div className="input-group">
+              <label htmlFor="password">
+                {isRegister ? 'Elige una contraseña (mín. 8 caracteres)' : 'Contraseña'}
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={handlePasswordChange}
+                placeholder="••••••••"
+                required
+                minLength={isRegister ? 8 : 1}
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+              />
+            </div>
+            <div className="button-row">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleBack}
+                disabled={status === 'loading'}
+              >
+                Volver
+              </button>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={status === 'loading'}
+              >
+                {status === 'loading'
+                  ? (isRegister ? 'Registrando...' : 'Entrando...')
+                  : (isRegister ? 'Registrar' : 'Entrar')}
+              </button>
+            </div>
+          </form>
+        )}
 
         {message && (
           <p className={`message ${status === 'error' ? 'text-neon-pink' : 'text-neon-cyan'}`}>
@@ -76,7 +183,7 @@ export default function LoginPage(): ReactElement {
         )}
       </div>
 
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{ __html: `
         .login-container {
           height: 80vh;
           display: flex;
@@ -111,6 +218,12 @@ export default function LoginPage(): ReactElement {
           flex-direction: column;
           gap: 1.5rem;
           margin-top: 1rem;
+          text-align: left;
+        }
+
+        .step-username {
+          color: var(--text-muted);
+          font-size: 0.9rem;
         }
 
         .input-group {
@@ -134,6 +247,7 @@ export default function LoginPage(): ReactElement {
           color: white;
           border-radius: 6px;
           outline: none;
+          box-sizing: border-box;
         }
 
         .input-group input:focus {
@@ -141,11 +255,32 @@ export default function LoginPage(): ReactElement {
           box-shadow: var(--neon-pink-glow);
         }
 
+        .button-row {
+          display: flex;
+          gap: 1rem;
+          justify-content: flex-end;
+        }
+
+        .btn-secondary {
+          background: transparent;
+          border: 1px solid var(--glass-border);
+          color: var(--text-muted);
+          padding: 10px 24px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-family: inherit;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+          border-color: var(--accent-cyan);
+          color: var(--accent-cyan);
+        }
+
         .message {
           font-size: 0.9rem;
-          margin-top: 1rem;
+          margin-top: 0.5rem;
         }
-      `}} />
+      ` }} />
     </div>
   );
 }

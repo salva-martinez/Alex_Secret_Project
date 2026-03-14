@@ -14,16 +14,10 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
-    let userId = session?.user?.id;
+    const userId = session?.user?.id;
 
-    // Fallback for development/user frustration bypass
     if (!userId) {
-      const firstUser = await prisma.user.findFirst();
-      if (firstUser) {
-        userId = firstUser.id;
-      } else {
-        return NextResponse.json({ error: "No users found in database" }, { status: 500 });
-      }
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -41,11 +35,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const fileExt = file.name.split('.').pop() || '';
     const fileName = `${uuidv4()}.${fileExt}`;
-    const relativePath = `/uploads/${fileName}`;
-    const absolutePath = join(process.cwd(), "public", "uploads", fileName);
+    const relativePath = `/api/media/file?key=${fileName}`;
+    const uploadsDir = join(process.cwd(), "uploads");
+    const absolutePath = join(uploadsDir, fileName);
 
-    // Ensure directory exists (redundant but safe)
-    await mkdir(join(process.cwd(), "public", "uploads"), { recursive: true });
+    await mkdir(uploadsDir, { recursive: true });
 
     // Write file to disk
     await writeFile(absolutePath, buffer);
@@ -83,10 +77,7 @@ export async function GET(): Promise<NextResponse> {
       orderBy: { createdAt: "desc" },
       include: { 
         user: { 
-          select: { 
-            name: true, 
-            image: true 
-          } 
+          select: { username: true } 
         } 
       },
     });
@@ -127,7 +118,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     }
 
     // 2. Delete file from disk
-    const absolutePath = join(process.cwd(), "public", "uploads", media.fileKey);
+    const absolutePath = join(process.cwd(), "uploads", media.fileKey);
     try {
       await unlink(absolutePath);
     } catch (fsErr) {
