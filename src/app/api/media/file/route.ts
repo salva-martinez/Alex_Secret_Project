@@ -60,7 +60,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     };
     const contentType = mimeTypes[ext] ?? "application/octet-stream";
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "private, max-age=3600",
