@@ -36,15 +36,15 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
         if (!response.ok) {
           throw new Error(`Failed to fetch: ${response.statusText}`);
         }
-        
+
         const data: unknown = await response.json();
-        
+
         if (!Array.isArray(data)) {
           throw new Error('Invalid data format received from API');
         }
 
         let processedData = data as MediaItem[];
-        
+
         // Apply Type Filter
         if (filter) {
           processedData = processedData.filter((item: MediaItem) => item.type === filter);
@@ -53,7 +53,7 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
         // Apply Search Filter
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
-          processedData = processedData.filter((item: MediaItem) => 
+          processedData = processedData.filter((item: MediaItem) =>
             (item.title && item.title.toLowerCase().includes(query)) ||
             (item.user.username && item.user.username.toLowerCase().includes(query))
           );
@@ -145,10 +145,10 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
               return item.type === 'IMAGE' ? (
                 <img src={fileUrl} alt={item.title || ''} className="media-img" />
               ) : item.type === 'VIDEO' ? (
-                <video src={fileUrl} controls className="media-video" />
+                <video src={fileUrl} controls controlsList="nodownload" className="media-video" />
               ) : item.type === 'AUDIO' ? (
                 <div className="audio-player-container">
-                  <audio src={fileUrl} controls className="media-audio" />
+                  <audio src={fileUrl} controls controlsList="nodownload" className="media-audio" />
                 </div>
               ) : (
                 <div className="file-download-container">
@@ -169,8 +169,9 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
           </footer>
         </article>
       ))}
-      
-      <style dangerouslySetInnerHTML={{__html: `
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .media-img {
           width: 100%;
           max-width: 100%;
