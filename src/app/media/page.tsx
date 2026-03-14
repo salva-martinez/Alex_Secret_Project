@@ -4,7 +4,7 @@ import MediaFeed from "@/components/MediaFeed";
 import React, { ReactElement, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-type FilterType = 'ALL' | 'IMAGE' | 'VIDEO';
+type FilterType = 'ALL' | 'IMAGE' | 'VIDEO' | 'AUDIO';
 
 function MediaPageContent(): ReactElement {
   const searchParams = useSearchParams();
@@ -46,6 +46,12 @@ function MediaPageContent(): ReactElement {
             className={`filter-btn ${activeFilter === 'VIDEO' ? 'active' : ''}`}
           >
             VIDEOS
+          </button>
+          <button 
+            onClick={() => handleFilterChange('AUDIO')} 
+            className={`filter-btn ${activeFilter === 'AUDIO' ? 'active' : ''}`}
+          >
+            AUDIO
           </button>
         </div>
       </div>

@@ -56,7 +56,6 @@ export default function Navbar(): React.ReactElement {
 
         <div className="nav-links font-display">
           <Link href="/" className="nav-item">HOME</Link>
-          <Link href="/news" className="nav-item">NEWS</Link>
           <Link href="/media" className="nav-item">MEDIA</Link>
           
           <button 

@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface UserInfo {
-  name: string | null;
-  image: string | null;
+  username: string;
 }
 
 interface MediaItem {
   id: string;
+  userId: string;
   title: string | null;
   url: string;
+  fileKey: string;
   type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'ARCHIVE';
   createdAt: string;
   user: UserInfo;
@@ -22,6 +24,7 @@ interface MediaFeedProps {
 }
 
 export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): React.ReactElement {
+  const { data: session } = useSession();
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +55,7 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
           const query = searchQuery.toLowerCase();
           processedData = processedData.filter((item: MediaItem) => 
             (item.title && item.title.toLowerCase().includes(query)) ||
-            (item.user.name && item.user.name.toLowerCase().includes(query))
+            (item.user.username && item.user.username.toLowerCase().includes(query))
           );
         }
 
@@ -118,20 +121,18 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
           <header className="card-header">
             <div className="user-info">
               <div className="avatar">
-                {item.user.image ? (
-                  <img src={item.user.image} alt="" />
-                ) : (
-                  item.user.name?.[0] || 'U'
-                )}
+                {item.user.username?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
-                <h3 className="username font-display">{item.user.name || 'Anonymous User'}</h3>
+                <h3 className="username font-display">{item.user.username || 'Usuario'}</h3>
                 <span className="timestamp text-muted">
                   {new Date(item.createdAt).toLocaleDateString()}
                 </span>
               </div>
             </div>
-            <button onClick={() => handleDelete(item.id)} className="delete-btn" title="Eliminar publicación">✕</button>
+            {session?.user?.id === item.userId && (
+              <button onClick={() => handleDelete(item.id)} className="delete-btn" title="Eliminar publicación">✕</button>
+            )}
           </header>
 
           <div className="card-content">
@@ -139,25 +140,28 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
           </div>
 
           <div className="media-container">
-            {item.type === 'IMAGE' ? (
-              <img src={item.url} alt={item.title || ''} className="media-img" />
-            ) : item.type === 'VIDEO' ? (
-              <video src={item.url} controls className="media-video" />
-            ) : item.type === 'AUDIO' ? (
-              <div className="audio-player-container">
-                <audio src={item.url} controls className="media-audio" />
-              </div>
-            ) : (
-              <div className="file-download-container">
-                <div className="file-icon">
-                  {item.type === 'ARCHIVE' ? '📦' : '📄'}
+            {(() => {
+              const fileUrl = `/api/media/file?key=${encodeURIComponent(item.fileKey)}`;
+              return item.type === 'IMAGE' ? (
+                <img src={fileUrl} alt={item.title || ''} className="media-img" />
+              ) : item.type === 'VIDEO' ? (
+                <video src={fileUrl} controls className="media-video" />
+              ) : item.type === 'AUDIO' ? (
+                <div className="audio-player-container">
+                  <audio src={fileUrl} controls className="media-audio" />
                 </div>
-                <div className="file-details">
-                  <span className="file-type-label font-display">{item.type}</span>
-                  <a href={item.url} download className="btn-primary mini-btn">DOWNLOAD</a>
+              ) : (
+                <div className="file-download-container">
+                  <div className="file-icon">
+                    {item.type === 'ARCHIVE' ? '📦' : '📄'}
+                  </div>
+                  <div className="file-details">
+                    <span className="file-type-label font-display">{item.type}</span>
+                    <a href={fileUrl} download className="btn-primary mini-btn">DOWNLOAD</a>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           <footer className="card-actions">
@@ -169,13 +173,18 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
       <style dangerouslySetInnerHTML={{__html: `
         .media-img {
           width: 100%;
-          height: 100%;
-          object-fit: cover;
+          height: auto;
+          max-height: 80vh;
+          object-fit: contain;
+          display: block;
+          vertical-align: middle;
         }
         .media-video {
           width: 100%;
-          height: 100%;
+          height: auto;
+          max-height: 80vh;
           object-fit: contain;
+          display: block;
           background: #000;
         }
         .feed-container {
@@ -255,7 +264,6 @@ export default function MediaFeed({ filter, searchQuery }: MediaFeedProps): Reac
           overflow: hidden;
           background: #000;
           position: relative;
-          aspect-ratio: 16/9;
           border: 1px solid var(--glass-border);
           display: flex;
           align-items: center;

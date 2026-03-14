@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import AuthProvider from '@/components/AuthProvider';
-import React, { ReactElement, ReactNode } from 'react';
+import React, { ReactElement, ReactNode, Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'FriendVault',
@@ -25,7 +25,9 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <Navbar />
+          <Suspense fallback={<nav className="navbar"><div className="navbar-container container" /></nav>}>
+            <Navbar />
+          </Suspense>
           <main className="container">
             {children}
           </main>

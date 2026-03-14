@@ -1,34 +1,51 @@
-import type { NextAuthOptions, Session, User } from "next-auth";
-import EmailProvider from "next-auth/providers/email";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
-import type { Adapter } from "next-auth/adapters";
-
-interface SessionUser extends User {
-  role?: string;
-}
+import bcrypt from "bcrypt";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
-    EmailProvider({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        username: { label: "Usuario", type: "text" },
+        password: { label: "Contraseña", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.password) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { username: credentials.username.trim() },
+        });
+
+        if (!user) {
+          return null;
+        }
+
+        const valid = await bcrypt.compare(
+          credentials.password,
+          user.passwordHash
+        );
+
+        if (!valid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.username,
+          role: user.role,
+        };
+      },
     }),
   ],
   callbacks: {
-    async signIn({ user }: { user: User }): Promise<boolean> {
-      // Temporary bypass for testing as requested by user
-      return true;
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { role: true }
-        });
-        token.role = dbUser?.role || 'USER';
+        token.role = (user as { role?: string }).role ?? "USER";
       }
       return token;
     },
@@ -41,8 +58,8 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: '/login',
-    error: '/login',
+    signIn: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",
